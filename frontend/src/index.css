@@ -1,0 +1,342 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%);
+  min-height: 100vh;
+  color: #fff;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 40px 20px;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 3.5rem;
+  background: linear-gradient(90deg, #00ff88, #00ccff, #ff88ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #888;
+  font-size: 1.2rem;
+}
+
+/* Attack Input Section */
+.input-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+  color: #00ff88;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attack-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.attack-row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr auto;
+  gap: 15px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.attack-number {
+  background: linear-gradient(135deg, #00ff88, #00ccff);
+  color: #000;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.form-group select,
+.form-group input {
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #00ff88;
+}
+
+.remove-btn {
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s;
+}
+
+.remove-btn:hover {
+  background: #ff4444;
+  color: #fff;
+}
+
+.add-attack-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 2px dashed #00ff88;
+  color: #00ff88;
+  padding: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.add-attack-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+}
+
+/* Predict Button */
+.predict-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 1.4rem;
+  background: linear-gradient(90deg, #00ff88, #00ccff);
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  color: #000;
+  font-weight: bold;
+  margin: 30px 0;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.predict-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
+}
+
+.predict-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Result Section */
+.result-section {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-card {
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+}
+
+.result-card.critical {
+  background: linear-gradient(135deg, #ff4444, #880000);
+}
+
+.result-card.high {
+  background: linear-gradient(135deg, #ff8800, #884400);
+}
+
+.result-card.medium {
+  background: linear-gradient(135deg, #888800, #444400);
+}
+
+.result-card.low {
+  background: linear-gradient(135deg, #008844, #004422);
+}
+
+.risk-badge {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.prediction-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin: 30px 0;
+  text-align: left;
+}
+
+.prediction-item {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.prediction-item h3 {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 5px;
+}
+
+.prediction-item p {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.probability-bar {
+  margin: 30px 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  height: 30px;
+  overflow: hidden;
+}
+
+.probability-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #ff4444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: width 1s;
+}
+
+.recommendation {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 25px;
+  border-radius: 15px;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.recommendation h3 {
+  color: #ffcc00;
+  margin-bottom: 10px;
+}
+
+.pattern-analysis {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  text-align: left;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #00ff88;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .attack-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .prediction-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .header h1 {
+    font-size: 2.5rem;
+  }
+}
