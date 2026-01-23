@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Data - Ignore large generated files
+data/all_intel_2020_2026.csv
+data/complete_daily_intel.csv
+data/daily_intel/
+
+# IDE
+.vscode/
+.idea/

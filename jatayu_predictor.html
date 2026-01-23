@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JATAYU - Attack Prediction with Intel Generation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #00ff88, #00ccff, #ff88ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 1fr 1fr 50px;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .input-num {
+            background: linear-gradient(135deg, #00ff88, #00ccff);
+            color: #000;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        label {
+            color: #888;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-add {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px dashed #00ff88;
+            color: #00ff88;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .present-date {
+            background: rgba(0, 204, 255, 0.1);
+            border: 1px solid #00ccff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .present-date label {
+            color: #00ccff;
+            margin: 0;
+        }
+
+        .present-date input {
+            max-width: 200px;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3rem;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            margin: 25px 0;
+        }
+
+        .predict-btn:hover {
+            transform: scale(1.01);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+        }
+
+        /* Intel Timeline */
+        .intel-timeline {
+            display: none;
+        }
+
+        .intel-timeline.show {
+            display: block;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .timeline-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .timeline-stat {
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .timeline-stat .num {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .timeline-stat .lbl {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .day-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .day-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .day-header.attack {
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.3), rgba(255, 136, 0, 0.3));
+            border-left: 4px solid #ff4444;
+        }
+
+        .day-header.predicted {
+            background: linear-gradient(90deg, rgba(255, 204, 0, 0.3), rgba(255, 136, 0, 0.2));
+            border-left: 4px solid #ffcc00;
+        }
+
+        .day-title {
+            font-weight: bold;
+        }
+
+        .day-date {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .day-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .badge-true {
+            background: rgba(0, 204, 102, 0.3);
+            color: #00cc66;
+        }
+
+        .badge-noise {
+            background: rgba(136, 136, 136, 0.3);
+            color: #aaa;
+        }
+
+        .badge-deception {
+            background: rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+        }
+
+        .day-content {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .day-content.show {
+            display: block;
+        }
+
+        .intel-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #888;
+        }
+
+        .intel-item.true {
+            border-left-color: #00cc66;
+        }
+
+        .intel-item.noise {
+            border-left-color: #666;
+        }
+
+        .intel-item.deception {
+            border-left-color: #ff4444;
+        }
+
+        .intel-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .intel-type {
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .intel-label {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .intel-label.true {
+            background: #00cc66;
+            color: #000;
+        }
+
+        .intel-label.noise {
+            background: #666;
+            color: #fff;
+        }
+
+        .intel-label.deception {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .intel-content {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .intel-meta {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Result Card */
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .result-card {
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .result-card.critical {
+            background: linear-gradient(135deg, #ff4444, #880000);
+        }
+
+        .result-card.high {
+            background: linear-gradient(135deg, #ff8800, #884400);
+        }
+
+        .result-card.medium {
+            background: linear-gradient(135deg, #888800, #444400);
+        }
+
+        .result-card.low {
+            background: linear-gradient(135deg, #008844, #004422);
+        }
+
+        .risk-badge {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .result-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .result-item h3 {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .result-item p {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .prob-bar {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            height: 30px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ff4444);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .recommendation {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .recommendation h3 {
+            color: #ffcc00;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎯 JATAYU</h1>
+            <p>Attack Prediction with Intel Generation</p>
+        </header>
+
+        <section class="section">
+            <h2>📍 Enter Attack History</h2>
+            <div id="attackInputs"></div>
+            <button class="btn btn-add" onclick="addAttack()">+ Add Another Attack</button>
+
+            <div class="present-date">
+                <label>📅 Present Date (for intel generation):</label>
+                <input type="date" id="presentDate" value="">
+                <span style="color:#888;font-size:0.85rem">Intel will be generated up to this date</span>
+            </div>
+
+            <div class="present-date" style="margin-top:10px;border-color:#ff8800;">
+                <label style="color:#ff8800;">⚡ Intel Generation Limit:</label>
+                <input type="number" id="intelDayLimit" value="60" min="7" max="365" style="max-width:80px;">
+                <span style="color:#888;font-size:0.85rem">Max days of intel to generate (prevents overload for large
+                    gaps)</span>
+            </div>
+        </section>
+
+        <button class="predict-btn" onclick="predict()">🔮 GENERATE INTEL & PREDICT</button>
+
+        <!-- Intel Timeline -->
+        <section class="section intel-timeline" id="intelTimeline">
+            <div class="timeline-header">
+                <h2>📡 Generated Intelligence Timeline</h2>
+                <div class="timeline-stats">
+                    <div class="timeline-stat">
+                        <div class="num" id="totalIntel">0</div>
+                        <div class="lbl">Total Reports</div>
+                    </div>
+                    <div class="timeline-stat">
+                        <div class="num" style="color:#00cc66" id="trueCount">0</div>
+                        <div class="lbl">True Signals (50%)</div>
+                    </div>
+                    <div class="timeline-stat">
+                        <div class="num" style="color:#888" id="noiseCount">0</div>
+                        <div class="lbl">Noise (40%)</div>
+                    </div>
+                    <div class="timeline-stat">
+                        <div class="num" style="color:#ff4444" id="deceptionCount">0</div>
+                        <div class="lbl">Deception (10%)</div>
+                    </div>
+                </div>
+            </div>
+            <div id="timelineContent"></div>
+        </section>
+
+        <!-- Prediction Result -->
+        <section class="result" id="resultSection">
+            <div class="result-card" id="resultCard">
+                <div class="risk-badge" id="riskBadge">⚠️ -- RISK</div>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <h3>📅 Predicted Date</h3>
+                        <p id="predDate">--</p>
+                    </div>
+                    <div class="result-item">
+                        <h3>📍 Location</h3>
+                        <p id="predLocation">--</p>
+                    </div>
+                    <div class="result-item">
+                        <h3>📊 Confidence</h3>
+                        <p id="predRange">±-- days</p>
+                    </div>
+                    <div class="result-item">
+                        <h3>📡 Intel Signals</h3>
+                        <p id="predSignals">--</p>
+                    </div>
+                </div>
+                <div class="prob-bar">
+                    <div class="prob-fill" id="probFill" style="width:0%">0%</div>
+                </div>
+                <div class="recommendation">
+                    <h3>🚨 RECOMMENDATION</h3>
+                    <p id="recText">--</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>JATAYU - Predictive Intelligence Fusion | Defense Hackathon</footer>
+    </div>
+
+    <script>
+        // All 18 districts from actual incident data (2020-2026)
+        const LOCATIONS = [
+            // Chhattisgarh - High Risk
+            'Bijapur', 'Sukma', 'Dantewada', 'Narayanpur', 'Bastar', 'Kanker',
+            // Jharkhand
+            'West Singhbhum', 'Gumla', 'Lohardaga', 'Latehar',
+            // Maharashtra
+            'Gadchiroli',
+            // Odisha
+            'Malkangiri', 'Kandhamal', 'Kalahandi', 'Sundargarh', 'Boudh-Kandhamal',
+            // Telangana
+            'Bhadradri Kothagudem'
+        ];
+        const TYPES = ['IED', 'Ambush', 'Landmine', 'Pressure IED', 'Remote IED', 'Culvert Blast', 'Vehicle IED'];
+
+        // Risk scores based on actual incident frequency from data
+        const RISK_BASE = {
+            // Very High Risk (most incidents)
+            'Bijapur': 0.85, 'Narayanpur': 0.78, 'Sukma': 0.75, 'West Singhbhum': 0.72,
+            // High Risk
+            'Dantewada': 0.68, 'Bastar': 0.65, 'Kanker': 0.58,
+            // Medium Risk
+            'Gadchiroli': 0.52, 'Gumla': 0.48, 'Lohardaga': 0.45, 'Latehar': 0.42,
+            // Lower Risk
+            'Malkangiri': 0.38, 'Kandhamal': 0.35, 'Kalahandi': 0.32, 'Sundargarh': 0.30,
+            'Boudh-Kandhamal': 0.28, 'Bhadradri Kothagudem': 0.25
+        };
+
+        // Intel templates
+        const HUMINT_TRUE = [
+            "Source reports unusual movement of 15-20 cadres near {loc} area",
+            "Reliable informant confirms IED materials being transported to {loc}",
+            "Village contact reports strangers asking about patrol timings in {loc}",
+            "Source indicates training camp activity increased near {loc}"
+        ];
+        const SIGINT_TRUE = [
+            "Intercepted communication mentions operation near {loc} in coming days",
+            "Radio traffic spike detected in {loc} sector - coded messages",
+            "Signal analysis shows command node activation near {loc}"
+        ];
+        const HUMINT_NOISE = [
+            "Unverified report of meeting in forest near {loc}",
+            "Villager claims to have seen unknown persons - no details",
+            "Routine market intelligence from {loc} - nothing significant"
+        ];
+        const SIGINT_NOISE = [
+            "Normal communication patterns observed in {loc}",
+            "Background radio activity in {loc} - within normal parameters"
+        ];
+        const DECEPTION = [
+            "SUSPECTED DECEPTION: Source claims attack planned in opposite direction",
+            "LIKELY FALSE: Report of mass gathering that contradicts other intel",
+            "DECEPTION ATTEMPT: Planted information about patrol changes"
+        ];
+
+        let attacks = [
+            { location: 'Bijapur', date: '2026-01-05', type: 'Pressure IED' },
+            { location: 'Bijapur', date: '2026-01-18', type: 'IED' }
+        ];
+
+        // Set present date to today
+        document.getElementById('presentDate').value = new Date().toISOString().split('T')[0];
+
+        function render() {
+            document.getElementById('attackInputs').innerHTML = attacks.map((a, i) => `
+                <div class="input-row">
+                    <div class="input-num">${i + 1}</div>
+                    <div><label>Location</label>
+                        <select onchange="attacks[${i}].location=this.value">
+                            ${LOCATIONS.map(l => `<option ${a.location === l ? 'selected' : ''}>${l}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div><label>Date</label><input type="date" value="${a.date}" onchange="attacks[${i}].date=this.value"></div>
+                    <div><label>Type</label>
+                        <select onchange="attacks[${i}].type=this.value">
+                            ${TYPES.map(t => `<option ${a.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button class="btn-remove" onclick="removeAttack(${i})" ${attacks.length <= 1 ? 'disabled' : ''}>✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addAttack() { attacks.push({ location: 'Bijapur', date: '', type: 'IED' }); render(); }
+        function removeAttack(i) { if (attacks.length > 1) { attacks.splice(i, 1); render(); } }
+
+        function generateIntelForDay(date, location, daysToAttack, isAttackDay) {
+            const intel = [];
+            const baseCount = 450 + Math.floor(Math.random() * 100); // ~500 reports per day to match dataset
+
+            // Signal intensity increases as attack approaches
+            const intensity = isAttackDay ? 0.9 : Math.max(0.3, 0.9 - (daysToAttack * 0.05));
+
+            for (let i = 0; i < baseCount; i++) {
+                const roll = Math.random();
+                let label, templates, type;
+
+                // 50% True, 40% Noise, 10% Deception
+                if (roll < 0.50) {
+                    label = 'TRUE_SIGNAL';
+                    type = Math.random() < 0.6 ? 'HUMINT' : 'SIGINT';
+                    templates = type === 'HUMINT' ? HUMINT_TRUE : SIGINT_TRUE;
+                } else if (roll < 0.90) {
+                    label = 'NOISE';
+                    type = Math.random() < 0.6 ? 'HUMINT' : 'SIGINT';
+                    templates = type === 'HUMINT' ? HUMINT_NOISE : SIGINT_NOISE;
+                } else {
+                    label = 'DECEPTION';
+                    type = 'HUMINT';
+                    templates = DECEPTION;
+                }
+
+                const template = templates[Math.floor(Math.random() * templates.length)];
+                const content = template.replace('{loc}', location);
+
+                intel.push({
+                    type,
+                    label,
+                    content,
+                    reliability: label === 'TRUE_SIGNAL' ? 'A' + (Math.random() < 0.5 ? '1' : '2') :
+                        label === 'NOISE' ? 'B' + (2 + Math.floor(Math.random() * 2)) : 'C3',
+                    urgency: daysToAttack <= 2 ? 'HIGH' : daysToAttack <= 5 ? 'MEDIUM' : 'LOW',
+                    intensity: (intensity * (0.8 + Math.random() * 0.4)).toFixed(2)
+                });
+            }
+            return intel;
+        }
+
+        function predict() {
+            const presentDate = new Date(document.getElementById('presentDate').value);
+            if (isNaN(presentDate)) { alert('Please enter present date'); return; }
+
+            // Get intel day limit
+            const intelDayLimit = parseInt(document.getElementById('intelDayLimit').value) || 60;
+
+            // Sort attacks by date
+            const sortedAttacks = attacks.filter(a => a.date).map(a => ({ ...a, dateObj: new Date(a.date) })).sort((a, b) => a.dateObj - b.dateObj);
+            if (sortedAttacks.length < 1) { alert('Enter at least one attack'); return; }
+
+            // Generate intel for all gap days
+            const allDays = [];
+            let totalTrue = 0, totalNoise = 0, totalDeception = 0;
+            let daysGenerated = 0;
+
+            // For each attack, generate intel for preceding days
+            for (let i = 0; i < sortedAttacks.length; i++) {
+                const attack = sortedAttacks[i];
+                const prevDate = i === 0 ? new Date(attack.dateObj.getTime() - 14 * 24 * 60 * 60 * 1000) : sortedAttacks[i - 1].dateObj;
+
+                // Days between previous event and this attack
+                let currentDate = new Date(prevDate.getTime() + 24 * 60 * 60 * 1000);
+                while (currentDate <= attack.dateObj) {
+                    const daysToAttack = Math.round((attack.dateObj - currentDate) / (24 * 60 * 60 * 1000));
+                    const isAttackDay = daysToAttack === 0;
+                    const intel = generateIntelForDay(currentDate.toISOString().split('T')[0], attack.location, daysToAttack, isAttackDay);
+
+                    intel.forEach(i => {
+                        if (i.label === 'TRUE_SIGNAL') totalTrue++;
+                        else if (i.label === 'NOISE') totalNoise++;
+                        else totalDeception++;
+                    });
+
+                    allDays.push({
+                        date: currentDate.toISOString().split('T')[0],
+                        daysToAttack,
+                        isAttackDay,
+                        location: attack.location,
+                        intel
+                    });
+                    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+                }
+            }
+
+            // Generate intel from last attack to present date (prediction period)
+            const lastAttack = sortedAttacks[sortedAttacks.length - 1];
+            let predDate = new Date(lastAttack.dateObj.getTime() + 24 * 60 * 60 * 1000);
+
+            // Calculate predicted attack date
+            let avgGap = 14;
+            if (sortedAttacks.length >= 2) {
+                const gaps = [];
+                for (let i = 1; i < sortedAttacks.length; i++) {
+                    gaps.push((sortedAttacks[i].dateObj - sortedAttacks[i - 1].dateObj) / (24 * 60 * 60 * 1000));
+                }
+                avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+            }
+            const predGap = Math.max(5, Math.round(avgGap * 0.85));
+            const predictedAttackDate = new Date(lastAttack.dateObj.getTime() + predGap * 24 * 60 * 60 * 1000);
+
+            // Generate intel up to present date (respecting limit)
+            let predDaysCount = 0;
+            while (predDate <= presentDate && predDaysCount < intelDayLimit) {
+                const daysToAttack = Math.max(0, Math.round((predictedAttackDate - predDate) / (24 * 60 * 60 * 1000)));
+                const intel = generateIntelForDay(predDate.toISOString().split('T')[0], lastAttack.location, daysToAttack, false);
+
+                intel.forEach(i => {
+                    if (i.label === 'TRUE_SIGNAL') totalTrue++;
+                    else if (i.label === 'NOISE') totalNoise++;
+                    else totalDeception++;
+                });
+
+                allDays.push({
+                    date: predDate.toISOString().split('T')[0],
+                    daysToAttack,
+                    isAttackDay: false,
+                    isPredictionPeriod: true,
+                    location: lastAttack.location,
+                    intel
+                });
+                predDate = new Date(predDate.getTime() + 24 * 60 * 60 * 1000);
+                predDaysCount++;
+            }
+
+            // Show message if limited
+            const totalGapDays = Math.round((presentDate - lastAttack.dateObj) / (24 * 60 * 60 * 1000));
+            if (predDaysCount < totalGapDays) {
+                console.log(`Intel limited to ${predDaysCount} days (full gap: ${totalGapDays} days)`);
+            }
+
+            // Render timeline
+            const total = totalTrue + totalNoise + totalDeception;
+            document.getElementById('totalIntel').textContent = total;
+            document.getElementById('trueCount').textContent = totalTrue + ' (' + (totalTrue / total * 100).toFixed(0) + '%)';
+            document.getElementById('noiseCount').textContent = totalNoise + ' (' + (totalNoise / total * 100).toFixed(0) + '%)';
+            document.getElementById('deceptionCount').textContent = totalDeception + ' (' + (totalDeception / total * 100).toFixed(0) + '%)';
+
+            const timeline = document.getElementById('timelineContent');
+            timeline.innerHTML = allDays.map((day, idx) => {
+                const trueCount = day.intel.filter(i => i.label === 'TRUE_SIGNAL').length;
+                const noiseCount = day.intel.filter(i => i.label === 'NOISE').length;
+                const decCount = day.intel.filter(i => i.label === 'DECEPTION').length;
+
+                const headerClass = day.isAttackDay ? 'attack' : (day.isPredictionPeriod ? 'predicted' : '');
+                const title = day.isAttackDay ? '⚠️ ATTACK DAY' : (day.isPredictionPeriod ? '🔮 Prediction Period' : `Day -${day.daysToAttack}`);
+
+                return `
+                    <div class="day-card">
+                        <div class="day-header ${headerClass}" onclick="toggleDay(${idx})">
+                            <div>
+                                <span class="day-title">${title}</span>
+                                <span class="day-date">${day.date} | ${day.location}</span>
+                            </div>
+                            <div class="day-badges">
+                                <span class="badge badge-true">${trueCount} True</span>
+                                <span class="badge badge-noise">${noiseCount} Noise</span>
+                                <span class="badge badge-deception">${decCount} Deception</span>
+                            </div>
+                        </div>
+                        <div class="day-content" id="day-${idx}">
+                            ${day.intel.map(i => `
+                                <div class="intel-item ${i.label.toLowerCase().replace('_', '')}">
+                                    <div class="intel-header">
+                                        <span class="intel-type">${i.type}</span>
+                                        <span class="intel-label ${i.label.toLowerCase().replace('_', '')}">${i.label.replace('_', ' ')}</span>
+                                    </div>
+                                    <div class="intel-content">${i.content}</div>
+                                    <div class="intel-meta">Reliability: ${i.reliability} | Urgency: ${i.urgency} | Intensity: ${i.intensity}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('intelTimeline').classList.add('show');
+
+            // Prediction result
+            const confDays = Math.max(2, Math.round(predGap * 0.25));
+            const locCounts = {};
+            sortedAttacks.forEach(a => locCounts[a.location] = (locCounts[a.location] || 0) + 1);
+            let predLoc = Object.keys(locCounts).reduce((a, b) => locCounts[a] > locCounts[b] ? a : b);
+
+            const tempo = Math.min(1, 14 / avgGap);
+            const locRisk = RISK_BASE[predLoc] || 0.5;
+            const prob = Math.min(0.92, tempo * 0.4 + locRisk * 0.4 + 0.2);
+
+            let level, rec;
+            if (prob >= 0.7) { level = 'CRITICAL'; rec = 'IMMEDIATE: Suspend patrols, deploy EOD, maximum alert!'; }
+            else if (prob >= 0.5) { level = 'HIGH'; rec = 'Deploy mine-protected vehicles, increase surveillance.'; }
+            else if (prob >= 0.3) { level = 'MEDIUM'; rec = 'Enhanced protocols, route clearance.'; }
+            else { level = 'LOW'; rec = 'Standard precautions.'; }
+
+            document.getElementById('resultSection').classList.add('show');
+            document.getElementById('resultCard').className = 'result-card ' + level.toLowerCase();
+            document.getElementById('riskBadge').textContent = '⚠️ ' + level + ' RISK';
+            document.getElementById('predDate').textContent = predictedAttackDate.toISOString().split('T')[0];
+            document.getElementById('predLocation').textContent = predLoc;
+            document.getElementById('predRange').textContent = '±' + confDays + ' days';
+            document.getElementById('predSignals').textContent = totalTrue.toLocaleString();
+            document.getElementById('probFill').style.width = (prob * 100) + '%';
+            document.getElementById('probFill').textContent = (prob * 100).toFixed(1) + '%';
+            document.getElementById('recText').textContent = rec;
+
+            document.getElementById('intelTimeline').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleDay(idx) {
+            document.getElementById('day-' + idx).classList.toggle('show');
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
