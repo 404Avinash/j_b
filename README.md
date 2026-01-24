@@ -164,7 +164,7 @@ For hackathon demonstration purposes only.
 
 ## 👥 Team
 
-Built for Hackathon 2025 - Operation Silent Watch
+Built for Hackathon 2026 - Operation Silent Watch
 
 ---
 
