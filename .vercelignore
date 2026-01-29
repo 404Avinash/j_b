@@ -1,0 +1,48 @@
+# Python files - not needed for static deployment
+*.py
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+
+# Python requirements - not needed
+requirements.txt
+Pipfile
+Pipfile.lock
+pyproject.toml
+
+# Data files - too large
+data/
+models/
+*.pkl
+*.joblib
+*.h5
+*.csv
+
+# Notebooks
+notebooks/
+*.ipynb
+
+# Backend/API (not deployed on Vercel)
+backend/
+api/
+
+# Development files
+.git/
+.gitignore
+*.md
+!README.md
+
+# Frontend folder (separate deployment)
+frontend/
+
+# Results and temp files
+results/
+*.log
+*.tmp
+
+# Batch files
+*.bat
