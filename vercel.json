@@ -1,0 +1,30 @@
+{
+    "version": 2,
+    "buildCommand": null,
+    "outputDirectory": ".",
+    "rewrites": [
+        {
+            "source": "/predictor",
+            "destination": "/jatayu_predictor.html"
+        },
+        {
+            "source": "/full",
+            "destination": "/jatayu_full.html"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                }
+            ]
+        }
+    ]
+}

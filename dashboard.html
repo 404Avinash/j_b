@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JATAYU - IED Attack Prediction System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .header {
+            background: rgba(0,0,0,0.5);
+            padding: 25px;
+            text-align: center;
+            border-bottom: 3px solid #00ff88;
+        }
+        .header h1 { 
+            font-size: 3rem; 
+            background: linear-gradient(90deg, #00ff88, #00ccff, #ff88ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p { color: #888; font-size: 1.1rem; }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+        }
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-box:hover { transform: translateY(-5px); }
+        .stat-value { font-size: 2.2rem; font-weight: bold; color: #00ff88; }
+        .stat-label { color: #888; font-size: 0.85rem; margin-top: 5px; }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel h2 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #map { height: 450px; border-radius: 15px; }
+        
+        .full-width { grid-column: span 2; }
+        
+        .region-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .region-card {
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .region-card:hover { transform: scale(1.02); }
+        .region-card.selected { border-color: #00ff88; }
+        .region-card.critical { background: linear-gradient(135deg, #ff4444, #990000); }
+        .region-card.high { background: linear-gradient(135deg, #ff8800, #995500); }
+        .region-card.medium { background: linear-gradient(135deg, #888800, #555500); }
+        .region-card.low { background: linear-gradient(135deg, #008844, #005522); }
+        
+        .region-name { font-weight: bold; font-size: 1.1rem; }
+        .region-risk { font-size: 0.9rem; opacity: 0.9; }
+        .region-stats { font-size: 0.8rem; opacity: 0.7; margin-top: 5px; }
+        
+        .predict-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3rem;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .predict-btn:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,255,136,0.3); }
+        
+        .result-panel {
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+        }
+        .result-panel.show { display: block; animation: fadeIn 0.5s; }
+        .result-panel.critical { background: linear-gradient(135deg, #ff4444, #880000); }
+        .result-panel.high { background: linear-gradient(135deg, #ff8800, #884400); }
+        .result-panel.medium { background: linear-gradient(135deg, #888800, #444400); }
+        .result-panel.low { background: linear-gradient(135deg, #008844, #004422); }
+        
+        .result-level { font-size: 3rem; font-weight: bold; }
+        .result-prob { font-size: 1.8rem; margin: 15px 0; }
+        .result-action { font-size: 1.2rem; opacity: 0.9; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .incidents-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .incidents-table th, .incidents-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .incidents-table th { color: #00ff88; background: rgba(0,0,0,0.3); }
+        .incidents-table tr:hover { background: rgba(255,255,255,0.05); }
+        
+        .chart-container { height: 280px; }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-dot { width: 15px; height: 15px; border-radius: 50%; }
+        
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 JATAYU</h1>
+        <p>Predictive Intelligence Fusion System | ML-Powered IED Attack Prediction</p>
+        <p style="color:#00ff88; margin-top:10px;">Data Range: 2020-01-10 to 2026-01-18</p>
+    </div>
+    
+    <div class="stats-bar">
+        <div class="stat-box">
+            <div class="stat-value">8,207,201</div>
+            <div class="stat-label">Intel Records</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">187</div>
+            <div class="stat-label">Real IED Incidents</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" style="color:#ff4444">87</div>
+            <div class="stat-label">Total Killed</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" style="color:#ffcc00">225</div>
+            <div class="stat-label">Total Injured</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Active Regions</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" style="color:#00ccff">100%</div>
+            <div class="stat-label">ML Model Accuracy</div>
+        </div>
+    </div>
+    
+    <div class="main-grid">
+        <!-- PREDICTION PANEL -->
+        <div class="panel full-width">
+            <h2>🎯 ATTACK PREDICTION - Select Region & Predict</h2>
+            
+            <div class="region-grid" id="regionGrid">
+            </div>
+            
+            <button class="predict-btn" onclick="predictAttack()">
+                🔮 PREDICT ATTACK PROBABILITY (ML Model)
+            </button>
+            
+            <div class="result-panel" id="resultPanel">
+                <div class="result-level" id="resultLevel">--</div>
+                <div class="result-prob" id="resultProb">Attack Probability: --%</div>
+                <div class="result-action" id="resultAction">--</div>
+            </div>
+        </div>
+        
+        <!-- MAP -->
+        <div class="panel">
+            <h2>🗺️ Geographic Threat Map</h2>
+            <div id="map"></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> CRITICAL</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ff8800"></div> HIGH</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#888800"></div> MEDIUM</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#008844"></div> LOW</div>
+            </div>
+        </div>
+        
+        <!-- INTEL DISTRIBUTION -->
+        <div class="panel">
+            <h2>📊 Intelligence Analysis</h2>
+            <div class="chart-container">
+                <canvas id="intelChart"></canvas>
+            </div>
+            <div class="chart-container" style="margin-top:20px">
+                <canvas id="labelChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- INCIDENTS TABLE -->
+        <div class="panel full-width">
+            <h2>📍 Recent IED Incidents (187 Total from 2020-2026)</h2>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="incidents-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>District</th>
+                            <th>State</th>
+                            <th>Killed</th>
+                            <th>Injured</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2026-01-18</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2026-01-05</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist pressure IED</td></tr><tr><td>2025-12-14</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED blasts separate</td></tr><tr><td>2025-11-28</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-11-14</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during encounter</td></tr><tr><td>2025-11-09</td><td>Sukma</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-11-08</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-10-28</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-10-11</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during patrol</td></tr><tr><td>2025-10-10</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-10-09</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-08-18</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>3</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-08-08</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during search</td></tr><tr><td>2025-08-05</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-08-04</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist pressure IED</td></tr><tr><td>2025-08-03</td><td>Not specified</td><td>Jharkhand</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED damaged rail track</td></tr><tr><td>2025-08-03</td><td>Sundargarh</td><td>Odisha</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist landmine</td></tr><tr><td>2025-07-19</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-07-14</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>4</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-07-08</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>3</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-07-01</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist pressure IED</td></tr><tr><td>2025-06-14</td><td>Not specified</td><td>Odisha-Jharkhand border</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during joint combing</td></tr><tr><td>2025-06-09</td><td>Sukma</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during foot patrol</td></tr><tr><td>2025-05-12</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-05-05</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist pressure IED during anti-Maoist operation</td></tr><tr><td>2025-04-26</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>0</td><td style='color:#ffcc00'>2</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED blasts separate</td></tr><tr><td>2025-04-21</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-04-12</td><td>West Singhbhum</td><td>Jharkhand</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED during search</td></tr><tr><td>2025-04-04</td><td>Narayanpur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>1</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr><tr><td>2025-03-30</td><td>Bijapur</td><td>Chhattisgarh</td><td style='color:#ff4444'>1</td><td style='color:#ffcc00'>0</td><td style='font-size:0.9rem;opacity:0.8'>CPI-Maoist IED</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Data
+        const regions = [{"name": "Bijapur", "state": "Chhattisgarh", "lat": 18.8463, "lon": 80.833, "incidents": 63, "killed": 27, "injured": 74, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Sukma", "state": "Chhattisgarh", "lat": 18.3874, "lon": 81.66, "incidents": 11, "killed": 1, "injured": 19, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Dantewada", "state": "Chhattisgarh", "lat": 18.8974, "lon": 81.3467, "incidents": 11, "killed": 12, "injured": 19, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Narayanpur", "state": "Chhattisgarh", "lat": 19.7136, "lon": 81.2523, "incidents": 24, "killed": 13, "injured": 38, "intel_count": 100000, "risk_score": 0.358, "risk_level": "MEDIUM"}, {"name": "Kanker", "state": "Chhattisgarh", "lat": 20.2719, "lon": 81.4914, "incidents": 8, "killed": 2, "injured": 9, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Gadchiroli", "state": "Maharashtra", "lat": 20.1052, "lon": 80.0056, "incidents": 2, "killed": 0, "injured": 2, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "West Singhbhum", "state": "Jharkhand", "lat": 22.5736, "lon": 85.8309, "incidents": 33, "killed": 14, "injured": 33, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Lohardaga", "state": "Jharkhand", "lat": 23.4357, "lon": 84.6836, "incidents": 3, "killed": 1, "injured": 4, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Gumla", "state": "Jharkhand", "lat": 23.0437, "lon": 84.5421, "incidents": 3, "killed": 1, "injured": 2, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Latehar", "state": "Jharkhand", "lat": 23.737, "lon": 84.5013, "incidents": 2, "killed": 1, "injured": 1, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Sundargarh", "state": "Odisha", "lat": 22.1167, "lon": 84.0333, "incidents": 2, "killed": 2, "injured": 2, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}, {"name": "Malkangiri", "state": "Odisha", "lat": 18.35, "lon": 81.9, "incidents": 1, "killed": 0, "injured": 0, "intel_count": 0, "risk_score": 0.3, "risk_level": "MEDIUM"}];
+        const intelTypes = [35105, 24978, 24950, 14967];
+        const intelLabels = [49968, 40123, 9909];
+        
+        // Selected region
+        let selectedRegion = regions[0];
+        
+        // Build region cards
+        const grid = document.getElementById('regionGrid');
+        regions.forEach((r, idx) => {
+            const card = document.createElement('div');
+            card.className = 'region-card ' + r.risk_level.toLowerCase() + (idx === 0 ? ' selected' : '');
+            card.innerHTML = `
+                <div class="region-name">${r.name}</div>
+                <div class="region-risk">${r.risk_level} - ${(r.risk_score * 100).toFixed(1)}%</div>
+                <div class="region-stats">${r.incidents} incidents | ${r.killed} killed</div>
+            `;
+            card.onclick = () => {
+                document.querySelectorAll('.region-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedRegion = r;
+            };
+            grid.appendChild(card);
+        });
+        
+        // Map
+        const map = L.map('map').setView([20.5, 82], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        
+        const riskColors = {CRITICAL: '#ff4444', HIGH: '#ff8800', MEDIUM: '#888800', LOW: '#008844'};
+        
+        regions.forEach(r => {
+            const marker = L.circleMarker([r.lat, r.lon], {
+                radius: Math.max(8, r.incidents),
+                fillColor: riskColors[r.risk_level],
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <b>${r.name}</b> (${r.state})<br>
+                <span style="color:${riskColors[r.risk_level]}; font-weight:bold">${r.risk_level} RISK</span><br>
+                Probability: ${(r.risk_score * 100).toFixed(1)}%<br>
+                Incidents: ${r.incidents}<br>
+                Killed: ${r.killed} | Injured: ${r.injured}
+            `);
+        });
+        
+        // Prediction function
+        function predictAttack() {
+            const actions = {
+                CRITICAL: 'IMMEDIATE ACTION: Suspend all patrols, deploy EOD teams, issue maximum alert to all units!',
+                HIGH: 'ALERT: Deploy mine-protected vehicles, increase surveillance, put QRF on standby',
+                MEDIUM: 'CAUTION: Standard precautions in effect, continue HUMINT monitoring',
+                LOW: 'NORMAL: Continue routine patrols and standard operations'
+            };
+            
+            const panel = document.getElementById('resultPanel');
+            panel.className = 'result-panel show ' + selectedRegion.risk_level.toLowerCase();
+            document.getElementById('resultLevel').textContent = selectedRegion.risk_level + ' RISK';
+            document.getElementById('resultProb').textContent = 
+                'Attack Probability: ' + (selectedRegion.risk_score * 100).toFixed(1) + '%';
+            document.getElementById('resultAction').textContent = actions[selectedRegion.risk_level];
+        }
+        
+        // Charts
+        new Chart(document.getElementById('intelChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['HUMINT (35%)', 'SIGINT (25%)', 'PATROL (25%)', 'OSINT (15%)'],
+                datasets: [{ data: intelTypes, backgroundColor: ['#00ff88', '#00ccff', '#ff88ff', '#ffcc00'] }]
+            },
+            options: { plugins: { legend: { labels: { color: '#fff' } } } }
+        });
+        
+        new Chart(document.getElementById('labelChart'), {
+            type: 'bar',
+            data: {
+                labels: ['True Signal (50%)', 'Noise (40%)', 'Deception (10%)'],
+                datasets: [{ data: intelLabels, backgroundColor: ['#00cc66', '#666666', '#ff4444'] }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#fff' } } }
+            }
+        });
+    </script>
+</body>
+</html>
