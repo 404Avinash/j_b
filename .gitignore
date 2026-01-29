@@ -3,19 +3,37 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
 .env
 
-# Data - Ignore large original files
-data/all_intel_2020_2026.csv
-data/complete_daily_intel.csv
-data/intel_by_year/*.csv
+# Large Data Files - Exclude everything over 50MB
+data/*.csv
+data/**/*.csv
 
-# Allow split parts and small files
-!data/all_intel_2020_2026_part*.csv
-!data/complete_daily_intel_part*.csv
-!data/intel_by_year/*_part*.csv
-!data/intel_by_year/intel_2026.csv
+# Models (large binary files)
+models/*.pkl
+models/*.joblib
+models/*.h5
+*.pkl
+*.joblib
+*.h5
+
+# Results
+results/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
 
 # IDE
 .vscode/
 .idea/
+
+# Deploy folder (separate)
+deploy/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
